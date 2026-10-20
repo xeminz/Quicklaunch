@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><title>QuickLaunch</title>
+<style>
+:root{--bg:#070a16;--glass:rgba(18,23,44,.96);--line:rgba(160,180,255,.16);--ink:#e8ecff;--mute:#8590b8;--cy:#5ef0ff;--vi:#9b7bff;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:transparent;color:var(--ink);font:400 15px/1.4 "Segoe UI",system-ui,sans-serif;overflow:hidden;padding:30px}
+.blob{position:fixed;width:50vmax;height:50vmax;border-radius:50%;filter:blur(90px);opacity:.38;pointer-events:none}
+.b1{background:#3a2cff;left:-12vmax;top:-14vmax}.b2{background:#00b7d6;right:-14vmax;bottom:-16vmax}
+#open{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--glass);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:10px 20px;font:inherit;cursor:pointer;backdrop-filter:blur(14px)}
+#open:hover,#open:focus-visible{border-color:var(--cy);outline:none}
+#ql{width:min(640px,92vw);background:var(--glass);border:1px solid var(--line);border-radius:20px;box-shadow:0 0 0 1px rgba(94,240,255,.07),0 10px 28px rgba(0,0,0,.45),0 0 22px rgba(94,240,255,.10);overflow:hidden;position:relative;transition:opacity .22s,transform .22s,filter .22s}
+#ql.off{opacity:0;transform:scale(.96) translateY(10px);filter:blur(6px);pointer-events:none}
+.top{display:flex;align-items:center;gap:12px;padding:18px 20px 14px;position:relative}
+.orb{width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,var(--cy) 45%,var(--vi));box-shadow:0 0 12px var(--cy);flex:none}
+#q{flex:1;background:none;border:0;outline:0;color:var(--ink);font:300 20px "Segoe UI",system-ui,sans-serif;caret-color:var(--cy);min-width:0}
+#q::placeholder{color:var(--mute)}
+.bar{position:absolute;left:20px;right:20px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--cy),var(--vi),transparent);background-size:200% 100%;animation:flow 3.2s linear infinite;opacity:.8}
+@keyframes flow{to{background-position:-200% 0}}
+#list{max-height:460px;overflow:auto;padding:8px;position:relative}
+.it{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:12px;cursor:pointer;border-left:2px solid transparent}
+.it.sel{background:rgba(120,140,255,.14);border-left-color:var(--cy);box-shadow:inset 0 0 24px rgba(94,240,255,.06)}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--vi),#3a5bff);flex:none}
+.ic.web{background:linear-gradient(135deg,#00b7d6,#3a5bff)}.ic.auto{background:linear-gradient(135deg,#ff6bd6,var(--vi))}.ic.file{background:linear-gradient(135deg,#4b5578,#2b3252)}.ic.calc{background:linear-gradient(135deg,#25d0a0,#00b7d6)}
+.nm{flex:1;min-width:0}.nm b{font-weight:500;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nm span{color:var(--mute);font-size:12.5px}
+.tag{font-size:12px;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:2px 10px;flex:none}
+.big{font-size:26px;font-weight:300;color:var(--cy)}
+.foot{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);color:var(--mute);font-size:12.5px}
+.foot button{background:none;border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:2px 9px;font:inherit;cursor:pointer}
+.foot button:hover,.foot button:focus-visible{border-color:var(--cy);outline:none}
+.foot .sp{flex:1}
+#form{display:none;padding:12px 16px 16px;border-top:1px solid var(--line);gap:8px;flex-direction:column}
+#form.on{display:flex}
+#form input,#form textarea{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 11px;font:inherit;resize:vertical}
+#form input:focus,#form textarea:focus{border-color:var(--cy);outline:none}
+#log{position:fixed;top:calc(20px + env(safe-area-inset-top,0px));right:20px;width:min(300px,86vw);display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.t{background:var(--glass);border:1px solid var(--line);border-left:2px solid var(--cy);border-radius:10px;padding:9px 12px;backdrop-filter:blur(14px);font-size:13.5px;animation:in .25s}
+@keyframes in{from{opacity:0;transform:translateX(14px)}}
+@media (prefers-reduced-motion:reduce){.bar{animation:none}#ql,.t{transition:none;animation:none}}
+.ic.search{background:linear-gradient(135deg,#00b7d6,#3a5bff)}
+.ic.folder{background:linear-gradient(135deg,#f5b94a,#e08a2b)}
+#ql{opacity:0;transform:translateY(-8px);transition:opacity .16s ease-out,transform .22s cubic-bezier(.2,.9,.25,1)}
+#ql.in{opacity:1;transform:none}
+.del{background:none;border:1px solid transparent;color:var(--mute);border-radius:8px;padding:2px 9px;font:inherit;cursor:pointer;opacity:0;transition:opacity .12s,color .12s,border-color .12s}
+.it:hover .del,.it.sel .del,.del:focus-visible{opacity:1}
+.del:hover,.del:focus-visible{color:#ff6b8a;border-color:rgba(255,107,138,.4);outline:none}
+.del.armed{opacity:1;color:#fff;background:#d6365a;border-color:#d6365a}
+#ql.out{opacity:0;transform:translateY(-4px);transition:opacity .12s ease-in,transform .12s ease-in}
+#list{transition:height .2s cubic-bezier(.2,.9,.25,1)}
+.it{transition:background .12s}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){#ql,#list{transition:none}#ql.first .it{animation:none}}
+</style></head>
+<body>
+<div id="ql" role="dialog" aria-label="QuickLaunch">
+  <div class="top"><span class="orb"></span><input id="q" autocomplete="off" spellcheck="false" placeholder="Apps, Dateien oder Aktionen suchen" aria-label="Suche"><div class="bar"></div></div>
+  <div id="list" role="listbox"></div>
+  <form id="form">
+    <input id="fn" placeholder="Name des Befehls, z. B. school" aria-label="Befehlsname">
+    <textarea id="fs" rows="4" placeholder="Ein Schritt pro Zeile, z. B.&#10;Chrome öffnen&#10;VS Code öffnen" aria-label="Schritte"></textarea>
+    <div><button type="submit" class="tag" style="color:var(--ink);cursor:pointer">Befehl speichern</button></div>
+  </form>
+  <div class="foot"><button data-p=">">&gt; Befehle</button><button data-p="@">@ Apps</button><button data-p="#"># Dateien &amp; Ordner</button><button data-p="!">! Automationen</button><span class="sp"></span><button id="nb" type="button">+ Neuer Befehl</button></div>
+</div>
+<script>
+var T=window.__TAURI__,inv=T.core.invoke,lis=T.event.listen;
+window.api={
+  search:function(q,m){return inv("search",{q:q,mode:m})},
+  launch:function(i){inv("launch",{item:i})},
+  url:function(u){inv("open_url",{url:u})},
+  suggest:function(q){return inv("suggest",{q:q})},
+  hide:function(){inv("hide_window")},
+  quit:function(){inv("quit")},
+  ready:function(){inv("ready")},
+  onPrepare:function(cb){lis("prepare",cb)},
+  onOpen:function(cb){lis("open",cb)},
+  onClose:function(cb){lis("close",cb)}
+};
+(function(){
+var $=function(s){return document.querySelector(s)},q=$("#q"),list=$("#list"),ql=$("#ql"),res=[],sel=0,seq=0;
+var webs=[["YouTube","https://www.youtube.com"],["GitHub","https://github.com"],["Google","https://www.google.com"],["Google Maps","https://maps.google.com"]];
+var autos=[{n:"school",s:["Chrome öffnen","https://www.google.com","Visual Studio Code öffnen"]},{n:"gaming",s:["Discord öffnen","Spotify öffnen"]}];
+try{var sv=JSON.parse(localStorage.getItem("ql_auto")||"null");if(sv)autos=sv}catch(e){}
+
+function sc(qq,t){t=t.toLowerCase();if(!qq)return 1;if(t.indexOf(qq)===0)return 4;if(t.indexOf(qq)>0)return 3;var i=0;for(var k=0;k<t.length&&i<qq.length;k++)if(t[k]===qq[i])i++;return i===qq.length?1:0}
+function calc(s){
+  s=s.replace(/^(rechnung|calc|rechne)\s+/i,"").replace(/^=/,"");
+  if(!/^[\d\s+\-*\/().,%^]+$/.test(s)||!/\d/.test(s)||!/[+\-*\/^%]/.test(s))return null;
+  try{var v=Function('"use strict";return ('+s.replace(/,/g,".").replace(/\^/g,"**")+")")();if(typeof v==="number"&&isFinite(v))return Math.round(v*1e8)/1e8}catch(e){}return null}
+
+async function build(){clearTimeout(sugT);
+  var raw=q.value.trim(),mode="all",v=raw;
+  if(v&&">@#!".indexOf(v[0])>-1){mode=v[0];v=v.slice(1).trim()}
+  var low=v.toLowerCase(),out=[],c=mode==="all"?calc(v):null,tok=++seq;
+  var found=(mode===">"||mode==="!")?[]:await window.api.search(v,mode);
+  if(tok!==seq)return;
+  if(mode==="all"||mode==="!")autos.forEach(function(a){var s=sc(low,a.n);if(s)out.push({kind:"auto",tag:"Automation",name:a.n,sub:a.s.length+" Schritte",steps:a.s,s:s+.2})});
+  if((mode==="all"&&low)||mode===">")webs.forEach(function(w){var s=sc(low,w[0]);if(s)out.push({kind:"web",tag:"Web",name:w[0],sub:w[1].replace("https://",""),url:w[1],s:s})});
+  out=out.concat(found);
+  if(mode==="all"&&/^(exit|beenden|quit)/.test(low))out.push({kind:"sys",tag:"System",name:"QuickLaunch beenden",sub:"Programm schließen",s:5});
+  out.sort(function(a,b){return b.s-a.s});
+  if(c!==null)out.unshift({kind:"calc",tag:"Rechner",name:String(c),sub:v.replace(/^(rechnung|calc|rechne)\s+/i,"")+" · Enter kopiert",val:c,big:1});
+  out=out.slice(0,5);
+  if(/^[a-zA-Z]:\\/.test(v))out.unshift({kind:"folder",tag:"Pfad",name:v,sub:"Direkt öffnen",path:v});
+  if(mode==="all"&&v&&!/^[a-zA-Z]:\\/.test(v)){
+    if(/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(v))out.push({kind:"web",tag:"Website",name:"Öffnen: "+v,sub:"Direkt im Browser",url:/^https?:\/\//.test(v)?v:"https://"+v});
+    out.push({kind:"search",tag:"Websuche",name:"Im Web suchen: "+v,sub:"Google",q:v})}
+  res=out;sel=0;draw();
+  if(mode==="all"&&v.length>1&&c===null&&!/^[a-zA-Z]:\\/.test(v))sugT=setTimeout(function(){window.api.suggest(v).then(function(a){
+    if(tok!==seq)return;
+    a.filter(function(x){return x.toLowerCase()!==v.toLowerCase()}).slice(0,3).forEach(function(x){res.push({kind:"search",tag:"Vorschlag",name:x,sub:"Beliebte Suche",q:x})});
+    draw()})},160)}
+
+function draw(){
+  list.innerHTML="";
+  if(!res.length){list.innerHTML='<div class="it"><div class="nm"><b>Nichts gefunden</b><span>Tipp: Mit „!“ legst du eigene Automationen an.</span></div></div>';fit();return}
+  res.forEach(function(r,i){
+    var d=document.createElement("div");d.className="it"+(i===sel?" sel":"");d.setAttribute("role","option");
+    d.innerHTML='<div class="ic '+r.kind+'">'+(r.kind==="calc"?"=":r.name[0].toUpperCase())+'</div><div class="nm"><b'+(r.big?' class="big"':"")+'></b><span></span></div>'+(r.kind==="auto"?'<button type="button" class="del" aria-label="Automation löschen" title="Löschen">×</button>':"")+'<span class="tag"></span>';
+    d.querySelector("b").textContent=r.name;d.querySelector(".nm span").textContent=r.sub;d.querySelector(".tag").textContent=r.tag;
+    d.style.animationDelay=(i*22)+"ms";var x=d.querySelector(".del");if(x){x.onclick=function(e){e.stopPropagation();if(!x.classList.contains("armed")){x.classList.add("armed");x.textContent="Löschen?";return}delAuto(r.name)};x.onmouseleave=function(){x.classList.remove("armed");x.textContent="×"}}d.onmousemove=function(){if(sel!==i){sel=i;mark()}};d.onclick=function(){run(r)};list.appendChild(d)});fit()}
+
+var lh=0,hold=0,sugT,inst=false,closing=false;
+function delAuto(n){autos=autos.filter(function(a){return a.n!==n});try{localStorage.setItem("ql_auto",JSON.stringify(autos))}catch(e){}build()}
+function mark(){[].forEach.call(list.querySelectorAll(".del.armed"),function(b){b.classList.remove("armed");b.textContent="×"});[].forEach.call(list.children,function(el,i){el.classList.toggle("sel",i===sel)});var c=list.children[sel];if(c){var t=c.offsetTop,b=t+c.offsetHeight;if(t<list.scrollTop)list.scrollTop=t-8;else if(b>list.scrollTop+list.clientHeight)list.scrollTop=b-list.clientHeight+8}}
+function fit(){
+  list.style.transition="none";list.style.height="auto";
+  var cap=$("#form").classList.contains("on")?200:460,h=Math.min(list.scrollHeight,cap);
+  if(q.value.trim()){h=Math.min(Math.max(h,hold),cap);hold=h}else hold=0;
+  if(inst){list.style.height=h+"px";lh=h;return}
+  list.style.height=lh+"px";void list.offsetHeight;list.style.transition="";list.style.height=h+"px";lh=h}
+function closeAnim(){if(closing)return;closing=true;ql.classList.remove("in","first");ql.classList.add("out");setTimeout(function(){closeAnim()},130)}
+function runSteps(steps){
+  steps.forEach(function(s,i){setTimeout(async function(){
+    if(/^https?:\/\//.test(s)){window.api.url(s);return}
+    if(/^[a-zA-Z]:\\/.test(s)){window.api.launch({kind:"folder",path:s});return}
+    var f=await window.api.search(s.replace(/\s+(öffnen|starten)$/i,""),"@");
+    if(f[0])window.api.launch(f[0])},i*500)})}
+function run(r){
+  if(r.kind==="calc"){try{navigator.clipboard.writeText(String(r.val))}catch(e){}}
+  else if(r.kind==="web")window.api.url(r.url);
+  else if(r.kind==="search")window.api.url("https://www.google.com/search?q="+encodeURIComponent(r.q));
+  else if(r.kind==="auto")runSteps(r.steps);
+  else if(r.kind==="sys"){window.api.quit();return}
+  else window.api.launch({kind:r.kind,id:r.id,path:r.path});
+  window.api.hide()}
+
+q.addEventListener("input",build);
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape")closeAnim();
+  else if(e.key==="ArrowDown"){e.preventDefault();sel=Math.min(sel+1,res.length-1);mark()}
+  else if(e.key==="ArrowUp"){e.preventDefault();sel=Math.max(sel-1,0);mark()}
+  else if(e.key==="Enter"&&document.activeElement===q&&res[sel])run(res[sel])});
+document.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){q.value=b.dataset.p;q.focus();build()}});
+$("#nb").onclick=function(){$("#form").classList.toggle("on");if($("#form").classList.contains("on"))$("#fn").focus();fit()};
+$("#form").onsubmit=function(e){e.preventDefault();
+  var n=$("#fn").value.trim().toLowerCase(),s=$("#fs").value.split("\n").map(function(x){return x.trim()}).filter(Boolean);
+  if(!n||!s.length){$("#fn").placeholder="Name und mindestens ein Schritt nötig";return}
+  autos=autos.filter(function(a){return a.n!==n});autos.push({n:n,s:s});
+  try{localStorage.setItem("ql_auto",JSON.stringify(autos))}catch(x){}
+  $("#fn").value=$("#fs").value="";$("#form").classList.remove("on");q.value="!";q.focus();build()};
+window.api.onPrepare(function(){
+  closing=false;inst=true;ql.className="";q.value="";$("#form").classList.remove("on");
+  list.style.transition="none";list.style.height="0px";lh=0;hold=0;
+  build().then(function(){requestAnimationFrame(function(){requestAnimationFrame(function(){window.api.ready()})})})});
+window.api.onOpen(function(){
+  ql.classList.add("in","first");q.focus();inst=false;
+  setTimeout(function(){ql.classList.remove("first")},520)});
+window.api.onClose(closeAnim);
+document.body.addEventListener("mousedown",function(e){if(!ql.contains(e.target))closeAnim()});
+build();
+})();
+</script>
+</body></html>
