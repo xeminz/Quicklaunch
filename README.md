@@ -1,6 +1,6 @@
 # QuickLaunch
 
-Ein schneller Launcher für Windows. Mit **Alt + Leertaste** öffnet sich überall ein kleines Suchfenster. Gebaut mit **Rust + Tauri v2**, dadurch braucht es sehr wenig Arbeitsspeicher.
+Ein schneller Launcher für Windows, inspiriert von der Spotlight-Suche auf dem Mac. Mit **Alt + Leertaste** öffnet sich überall ein kleines Suchfenster. Gebaut mit **Rust + Tauri v2**, dadurch braucht es sehr wenig Arbeitsspeicher.
 
 ## Was kann es?
 
