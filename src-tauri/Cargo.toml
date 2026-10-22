@@ -16,6 +16,9 @@ serde_json = "1"
 notify = "6"
 ureq = "2"
 dirs = "5"
+png = "0.17"
+sha2 = "0.10"
+windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_System_Com", "Win32_UI_Shell"] }
 
 [features]
 default = ["custom-protocol"]

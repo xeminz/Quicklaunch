@@ -1,0 +1,44 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Version aus dem Tag uebernehmen
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}".TrimStart('v')
+          (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', "version = `"$v`"" | Set-Content src-tauri/Cargo.toml
+
+      - name: Bauen
+        working-directory: src-tauri
+        run: cargo build --release
+
+      - name: Pruefsumme erzeugen
+        shell: pwsh
+        run: |
+          Copy-Item src-tauri/target/release/quicklaunch.exe quicklaunch.exe
+          (Get-FileHash quicklaunch.exe -Algorithm SHA256).Hash.ToLower() | Out-File -Encoding ascii -NoNewline quicklaunch.exe.sha256
+
+      - name: Release veroeffentlichen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            quicklaunch.exe
+            quicklaunch.exe.sha256
+          generate_release_notes: true
