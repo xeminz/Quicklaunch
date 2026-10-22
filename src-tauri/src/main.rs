@@ -26,7 +26,7 @@ const MAX_DEPTH: usize = 6;
 const MAX_ENTRIES: usize = 200_000;
 const WIN_WIDTH: f64 = 700.0;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-const REPO: &str = "xeminz/quicklaunch-rust";
+const REPO: &str = "xeminz/Quicklaunch";
 
 // ---------- Index (im Speicher, mit Cache auf der Festplatte) ----------
 
