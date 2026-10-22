@@ -1,67 +1,59 @@
 <!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8"><title>QuickLaunch</title>
 <style>
-:root{--bg:#070a16;--glass:rgba(18,23,44,.96);--line:rgba(160,180,255,.16);--ink:#e8ecff;--mute:#8590b8;--cy:#5ef0ff;--vi:#9b7bff;color-scheme:dark;
+:root{--bg:#1f1f1f;--hov:rgba(255,255,255,.06);--sel:rgba(255,255,255,.09);--line:rgba(255,255,255,.08);--ink:#f5f5f5;--mute:#a0a0a0;--acc:#60cdff;color-scheme:dark;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:transparent;color:var(--ink);font:400 15px/1.4 "Segoe UI",system-ui,sans-serif;overflow:hidden;padding:30px}
-.blob{position:fixed;width:50vmax;height:50vmax;border-radius:50%;filter:blur(90px);opacity:.38;pointer-events:none}
-.b1{background:#3a2cff;left:-12vmax;top:-14vmax}.b2{background:#00b7d6;right:-14vmax;bottom:-16vmax}
-#open{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--glass);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:10px 20px;font:inherit;cursor:pointer;backdrop-filter:blur(14px)}
-#open:hover,#open:focus-visible{border-color:var(--cy);outline:none}
-#ql{width:min(640px,92vw);background:var(--glass);border:1px solid var(--line);border-radius:20px;box-shadow:0 0 0 1px rgba(94,240,255,.07),0 10px 28px rgba(0,0,0,.45),0 0 22px rgba(94,240,255,.10);overflow:hidden;position:relative;transition:opacity .22s,transform .22s,filter .22s}
-#ql.off{opacity:0;transform:scale(.96) translateY(10px);filter:blur(6px);pointer-events:none}
-.top{display:flex;align-items:center;gap:12px;padding:18px 20px 14px;position:relative}
-.orb{width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,var(--cy) 45%,var(--vi));box-shadow:0 0 12px var(--cy);flex:none}
-#q{flex:1;background:none;border:0;outline:0;color:var(--ink);font:300 20px "Segoe UI",system-ui,sans-serif;caret-color:var(--cy);min-width:0}
-#q::placeholder{color:var(--mute)}
-.bar{position:absolute;left:20px;right:20px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--cy),var(--vi),transparent);background-size:200% 100%;animation:flow 3.2s linear infinite;opacity:.8}
-@keyframes flow{to{background-position:-200% 0}}
-#list{max-height:460px;overflow:auto;padding:8px;position:relative}
-.it{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:12px;cursor:pointer;border-left:2px solid transparent}
-.it.sel{background:rgba(120,140,255,.14);border-left-color:var(--cy);box-shadow:inset 0 0 24px rgba(94,240,255,.06)}
-.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--vi),#3a5bff);flex:none}
-.ic.web{background:linear-gradient(135deg,#00b7d6,#3a5bff)}.ic.auto{background:linear-gradient(135deg,#ff6bd6,var(--vi))}.ic.file{background:linear-gradient(135deg,#4b5578,#2b3252)}.ic.calc{background:linear-gradient(135deg,#25d0a0,#00b7d6)}
-.nm{flex:1;min-width:0}.nm b{font-weight:500;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nm span{color:var(--mute);font-size:12.5px}
-.tag{font-size:12px;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:2px 10px;flex:none}
-.big{font-size:26px;font-weight:300;color:var(--cy)}
-.foot{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);color:var(--mute);font-size:12.5px}
-.foot button{background:none;border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:2px 9px;font:inherit;cursor:pointer}
-.foot button:hover,.foot button:focus-visible{border-color:var(--cy);outline:none}
-.foot .sp{flex:1}
-#form{display:none;padding:12px 16px 16px;border-top:1px solid var(--line);gap:8px;flex-direction:column}
-#form.on{display:flex}
-#form input,#form textarea{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 11px;font:inherit;resize:vertical}
-#form input:focus,#form textarea:focus{border-color:var(--cy);outline:none}
-#log{position:fixed;top:calc(20px + env(safe-area-inset-top,0px));right:20px;width:min(300px,86vw);display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.t{background:var(--glass);border:1px solid var(--line);border-left:2px solid var(--cy);border-radius:10px;padding:9px 12px;backdrop-filter:blur(14px);font-size:13.5px;animation:in .25s}
-@keyframes in{from{opacity:0;transform:translateX(14px)}}
-@media (prefers-reduced-motion:reduce){.bar{animation:none}#ql,.t{transition:none;animation:none}}
-.ic.search{background:linear-gradient(135deg,#00b7d6,#3a5bff)}
-.ic.folder{background:linear-gradient(135deg,#f5b94a,#e08a2b)}
-#ql{opacity:0;transform:translateY(-8px);transition:opacity .16s ease-out,transform .22s cubic-bezier(.2,.9,.25,1)}
+body{background:transparent;color:var(--ink);font:400 14px/1.4 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;overflow:hidden;padding:30px}
+#ql{width:min(640px,100%);background:var(--bg);border:1px solid var(--line);border-radius:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 14px 36px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3);overflow:hidden;position:relative;opacity:0;transform:translateY(-8px);transition:opacity .14s ease-out,transform .2s cubic-bezier(.2,.9,.3,1)}
 #ql.in{opacity:1;transform:none}
-.del{background:none;border:1px solid transparent;color:var(--mute);border-radius:8px;padding:2px 9px;font:inherit;cursor:pointer;opacity:0;transition:opacity .12s,color .12s,border-color .12s}
+#ql.out{opacity:0;transform:translateY(-4px);transition:opacity .1s ease-in,transform .1s ease-in}
+.top{display:flex;align-items:center;gap:14px;padding:18px 22px 16px;border-bottom:1px solid var(--line)}
+.mg{font:17px "Segoe Fluent Icons","Segoe MDL2 Assets";color:var(--mute);width:20px;text-align:center;flex:none}
+#q{flex:1;background:none;border:0;outline:0;color:var(--ink);font:400 18px "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;caret-color:var(--acc);min-width:0}
+#q::placeholder{color:var(--mute)}
+#list{max-height:460px;overflow:auto;padding:8px;position:relative;transition:height .18s cubic-bezier(.2,.9,.3,1)}
+#list::-webkit-scrollbar{width:10px}#list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:6px;border:3px solid transparent;background-clip:content-box}
+.it{display:flex;align-items:center;gap:14px;padding:9px 12px;border-radius:12px;cursor:default;position:relative;transition:background .1s}
+.it.sel{background:var(--sel)}
+.it.sel::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--acc)}
+.ic{width:36px;height:36px;flex:none;display:grid;place-items:center}
+.ic img{width:36px;height:36px;object-fit:contain}
+.ic.gl{background:var(--hov);border-radius:10px}
+.ic .g{font:19px "Segoe Fluent Icons","Segoe MDL2 Assets";color:#d6d6d6}
+.nm{flex:1;min-width:0}
+.nm b{display:block;font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm span{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm b.big{font-size:24px;font-weight:400;line-height:1.2}
+.tag{color:var(--mute);font-size:12px;flex:none}
+.del{background:none;border:0;color:var(--mute);border-radius:8px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer;opacity:0;transition:opacity .1s}
 .it:hover .del,.it.sel .del,.del:focus-visible{opacity:1}
-.del:hover,.del:focus-visible{color:#ff6b8a;border-color:rgba(255,107,138,.4);outline:none}
-.del.armed{opacity:1;color:#fff;background:#d6365a;border-color:#d6365a}
-#ql.out{opacity:0;transform:translateY(-4px);transition:opacity .12s ease-in,transform .12s ease-in}
-#list{transition:height .2s cubic-bezier(.2,.9,.25,1)}
-.it{transition:background .12s}
-@keyframes rise{from{opacity:0;transform:translateY(8px)}}
-@media (prefers-reduced-motion:reduce){#ql,#list{transition:none}#ql.first .it{animation:none}}
+.del:hover,.del:focus-visible{color:var(--ink);background:rgba(255,255,255,.1);outline:none}
+.del.armed{opacity:1;color:#fff;background:#c42b1c}
+.foot{display:flex;flex-wrap:wrap;gap:2px 4px;align-items:center;padding:8px 12px;background:rgba(0,0,0,.2);border-top:1px solid var(--line);color:var(--mute);font-size:12px}
+.foot button{background:none;border:0;color:var(--mute);font:inherit;padding:5px 9px;border-radius:8px;cursor:pointer;transition:background .1s,color .1s}
+.foot button:hover,.foot button:focus-visible{color:var(--ink);background:var(--hov);outline:none}
+.foot .sp{flex:1}
+#form{display:none;padding:14px 18px 18px;border-top:1px solid var(--line);gap:10px;flex-direction:column}
+#form.on{display:flex}
+#form input,#form textarea{background:var(--hov);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 12px;font:inherit;resize:vertical}
+#form input:focus,#form textarea:focus{border-color:var(--acc);outline:none}
+#form button{align-self:flex-start;background:var(--sel);border:0;color:var(--ink);border-radius:10px;padding:8px 16px;font:inherit;cursor:pointer}
+#form button:hover{background:rgba(255,255,255,.14)}
+.foot .upd{font-size:11px;opacity:.75}.foot .upd.has{color:var(--ink);opacity:1}.foot .upd i{color:var(--acc);font-style:normal}
+@media (prefers-reduced-motion:reduce){#ql,#list,.it{transition:none}}
 </style></head>
 <body>
 <div id="ql" role="dialog" aria-label="QuickLaunch">
-  <div class="top"><span class="orb"></span><input id="q" autocomplete="off" spellcheck="false" placeholder="Apps, Dateien oder Aktionen suchen" aria-label="Suche"><div class="bar"></div></div>
+  <div class="top"><span class="mg">&#xE721;</span><input id="q" autocomplete="off" spellcheck="false" placeholder="Apps, Dateien und Befehle suchen" aria-label="Suche"></div>
   <div id="list" role="listbox"></div>
   <form id="form">
     <input id="fn" placeholder="Name des Befehls, z. B. school" aria-label="Befehlsname">
     <textarea id="fs" rows="4" placeholder="Ein Schritt pro Zeile, z. B.&#10;Chrome öffnen&#10;VS Code öffnen" aria-label="Schritte"></textarea>
-    <div><button type="submit" class="tag" style="color:var(--ink);cursor:pointer">Befehl speichern</button></div>
+    <div><button type="submit">Befehl speichern</button></div>
   </form>
-  <div class="foot"><button data-p=">">&gt; Befehle</button><button data-p="@">@ Apps</button><button data-p="#"># Dateien &amp; Ordner</button><button data-p="!">! Automationen</button><span class="sp"></span><button id="nb" type="button">+ Neuer Befehl</button></div>
+  <div class="foot"><button data-p=">">&gt; Befehle</button><button data-p="@">@ Apps</button><button data-p="#"># Dateien &amp; Ordner</button><button data-p="!">! Automationen</button><span class="sp"></span><button id="nb" type="button">+ Neuer Befehl</button><button id="upd" type="button" class="upd"></button></div>
 </div>
 <script>
 var T=window.__TAURI__,inv=T.core.invoke,lis=T.event.listen;
@@ -72,6 +64,10 @@ window.api={
   suggest:function(q){return inv("suggest",{q:q})},
   hide:function(){inv("hide_window")},
   quit:function(){inv("quit")},
+  icon:function(k,p){return inv("icon",{key:k,persist:p})},
+  version:function(){return inv("version")},
+  checkUpdate:function(f){return inv("check_update",{force:f})},
+  installUpdate:function(){return inv("install_update")},
   ready:function(){inv("ready")},
   onPrepare:function(cb){lis("prepare",cb)},
   onOpen:function(cb){lis("open",cb)},
@@ -99,6 +95,7 @@ async function build(){clearTimeout(sugT);
   if((mode==="all"&&low)||mode===">")webs.forEach(function(w){var s=sc(low,w[0]);if(s)out.push({kind:"web",tag:"Web",name:w[0],sub:w[1].replace("https://",""),url:w[1],s:s})});
   out=out.concat(found);
   if(mode==="all"&&/^(exit|beenden|quit)/.test(low))out.push({kind:"sys",tag:"System",name:"QuickLaunch beenden",sub:"Programm schließen",s:5});
+  if(mode==="all"&&/^(update|aktual)/.test(low))out.push({kind:"sys",act:"update",tag:"System",name:updInfo?"Update auf v"+updInfo.version+" installieren":"Nach Updates suchen",sub:"Version "+VER,s:5});
   out.sort(function(a,b){return b.s-a.s});
   if(c!==null)out.unshift({kind:"calc",tag:"Rechner",name:String(c),sub:v.replace(/^(rechnung|calc|rechne)\s+/i,"")+" · Enter kopiert",val:c,big:1});
   out=out.slice(0,5);
@@ -117,10 +114,18 @@ function draw(){
   if(!res.length){list.innerHTML='<div class="it"><div class="nm"><b>Nichts gefunden</b><span>Tipp: Mit „!“ legst du eigene Automationen an.</span></div></div>';fit();return}
   res.forEach(function(r,i){
     var d=document.createElement("div");d.className="it"+(i===sel?" sel":"");d.setAttribute("role","option");
-    d.innerHTML='<div class="ic '+r.kind+'">'+(r.kind==="calc"?"=":r.name[0].toUpperCase())+'</div><div class="nm"><b'+(r.big?' class="big"':"")+'></b><span></span></div>'+(r.kind==="auto"?'<button type="button" class="del" aria-label="Automation löschen" title="Löschen">×</button>':"")+'<span class="tag"></span>';
+    d.innerHTML='<div class="ic"></div><div class="nm"><b'+(r.big?' class="big"':"")+'></b><span></span></div>'+(r.kind==="auto"?'<button type="button" class="del" aria-label="Automation löschen" title="Löschen">×</button>':"")+'<span class="tag"></span>';
     d.querySelector("b").textContent=r.name;d.querySelector(".nm span").textContent=r.sub;d.querySelector(".tag").textContent=r.tag;
-    d.style.animationDelay=(i*22)+"ms";var x=d.querySelector(".del");if(x){x.onclick=function(e){e.stopPropagation();if(!x.classList.contains("armed")){x.classList.add("armed");x.textContent="Löschen?";return}delAuto(r.name)};x.onmouseleave=function(){x.classList.remove("armed");x.textContent="×"}}d.onmousemove=function(){if(sel!==i){sel=i;mark()}};d.onclick=function(){run(r)};list.appendChild(d)});fit()}
+    var ic=d.querySelector(".ic");
+    function glyph(){ic.className="ic gl";ic.innerHTML="";var g=document.createElement("span");g.className="g";g.textContent=GL[r.kind]||"\uE8A5";ic.appendChild(g)}
+    function pic(u){var im=new Image();im.src=u;ic.className="ic";ic.innerHTML="";ic.appendChild(im)}
+    if(r.kind==="app"||r.kind==="file"||r.kind==="folder"||r.kind==="path"){
+      var key=r.kind==="app"?"shell:AppsFolder\\"+r.id:r.path;
+      if(icons[key])pic(icons[key]);else{glyph();window.api.icon(key,r.kind==="app").then(function(u){if(u){icons[key]=u;pic(u)}})}
+    }else glyph();
+    var x=d.querySelector(".del");if(x){x.onclick=function(e){e.stopPropagation();if(!x.classList.contains("armed")){x.classList.add("armed");x.textContent="Löschen?";return}delAuto(r.name)};x.onmouseleave=function(){x.classList.remove("armed");x.textContent="×"}}d.onmousemove=function(){if(sel!==i){sel=i;mark()}};d.onclick=function(){run(r)};list.appendChild(d)});fit()}
 
+var icons={},GL={calc:"\uE1E7",web:"\uE774",search:"\uE721",auto:"\uE768",sys:"\uE7E8",save:"\uE74E",hint:"\uE897",folder:"\uE8B7",path:"\uE8B7",file:"\uE8A5",app:"\uE71D"};
 var lh=0,hold=0,sugT,inst=false,closing=false;
 function delAuto(n){autos=autos.filter(function(a){return a.n!==n});try{localStorage.setItem("ql_auto",JSON.stringify(autos))}catch(e){}build()}
 function mark(){[].forEach.call(list.querySelectorAll(".del.armed"),function(b){b.classList.remove("armed");b.textContent="×"});[].forEach.call(list.children,function(el,i){el.classList.toggle("sel",i===sel)});var c=list.children[sel];if(c){var t=c.offsetTop,b=t+c.offsetHeight;if(t<list.scrollTop)list.scrollTop=t-8;else if(b>list.scrollTop+list.clientHeight)list.scrollTop=b-list.clientHeight+8}}
@@ -130,7 +135,19 @@ function fit(){
   if(q.value.trim()){h=Math.min(Math.max(h,hold),cap);hold=h}else hold=0;
   if(inst){list.style.height=h+"px";lh=h;return}
   list.style.height=lh+"px";void list.offsetHeight;list.style.transition="";list.style.height=h+"px";lh=h}
-function closeAnim(){if(closing)return;closing=true;ql.classList.remove("in","first");ql.classList.add("out");setTimeout(function(){closeAnim()},130)}
+function closeAnim(){if(closing)return;closing=true;ql.classList.remove("in","first");ql.classList.add("out");setTimeout(function(){window.api.hide()},130)}
+var upd=$("#upd"),updInfo=null,VER="";
+function setUpd(){
+  upd.textContent="";
+  if(updInfo){var d=document.createElement("i");d.textContent="\u25CF";upd.appendChild(d);upd.appendChild(document.createTextNode(" Update auf v"+updInfo.version));upd.className="upd has";upd.title="Jetzt installieren"}
+  else{upd.textContent="v"+VER;upd.className="upd";upd.title="Nach Updates suchen"}}
+function checkUpd(force){return window.api.checkUpdate(force).then(function(i){updInfo=i||null;setUpd();return updInfo}).catch(function(){return null})}
+function doUpdate(){
+  if(updInfo){upd.className="upd";upd.textContent="Lade herunter\u2026";window.api.installUpdate().catch(function(){upd.textContent="Update fehlgeschlagen";setTimeout(setUpd,4000)});return}
+  upd.textContent="Suche\u2026";checkUpd(true).then(function(i){if(!i){upd.textContent="Aktuell \u2713";setTimeout(setUpd,2500)}})}
+upd.onclick=doUpdate;
+window.api.version().then(function(v){VER=v;setUpd()});
+checkUpd(false);
 function runSteps(steps){
   steps.forEach(function(s,i){setTimeout(async function(){
     if(/^https?:\/\//.test(s)){window.api.url(s);return}
@@ -142,9 +159,9 @@ function run(r){
   else if(r.kind==="web")window.api.url(r.url);
   else if(r.kind==="search")window.api.url("https://www.google.com/search?q="+encodeURIComponent(r.q));
   else if(r.kind==="auto")runSteps(r.steps);
-  else if(r.kind==="sys"){window.api.quit();return}
+  else if(r.kind==="sys"){if(r.act==="update"){doUpdate();closeAnim();return}window.api.quit();return}
   else window.api.launch({kind:r.kind,id:r.id,path:r.path});
-  window.api.hide()}
+  closeAnim()}
 
 q.addEventListener("input",build);
 document.addEventListener("keydown",function(e){
@@ -164,7 +181,7 @@ window.api.onPrepare(function(){
   closing=false;inst=true;ql.className="";q.value="";$("#form").classList.remove("on");
   list.style.transition="none";list.style.height="0px";lh=0;hold=0;
   build().then(function(){requestAnimationFrame(function(){requestAnimationFrame(function(){window.api.ready()})})})});
-window.api.onOpen(function(){
+window.api.onOpen(function(){checkUpd(false);
   ql.classList.add("in","first");q.focus();inst=false;
   setTimeout(function(){ql.classList.remove("first")},520)});
 window.api.onClose(closeAnim);

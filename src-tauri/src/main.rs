@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::ffi::c_void;
+use std::mem::size_of;
 use std::fs;
 use std::io::{BufRead, Read};
 use std::os::windows::process::CommandExt;
@@ -9,8 +11,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
+use sha2::{Digest, Sha256};
 use notify::{EventKind, RecursiveMode, Watcher};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -22,6 +25,8 @@ const NO_WINDOW: u32 = 0x0800_0000;
 const MAX_DEPTH: usize = 6;
 const MAX_ENTRIES: usize = 200_000;
 const WIN_WIDTH: f64 = 700.0;
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const REPO: &str = "xeminz/quicklaunch-rust";
 
 // ---------- Index (im Speicher, mit Cache auf der Festplatte) ----------
 
@@ -45,6 +50,9 @@ struct Index {
 
 struct Shared {
     index: Mutex<Index>,
+    icons: Mutex<HashMap<String, String>>,
+    update: Mutex<Option<UpdateInfo>>,
+    last_check: Mutex<Option<Instant>>,
     pending: AtomicBool,
     closing: AtomicBool,
 }
@@ -449,6 +457,247 @@ fn suggest(q: String) -> Vec<String> {
         .unwrap_or_default()
 }
 
+// ---------- Updates ueber GitHub-Releases ----------
+
+#[derive(Clone, Serialize)]
+struct UpdateInfo {
+    version: String,
+    url: String,
+    sha_url: String,
+}
+
+fn parse_ver(s: &str) -> Vec<u32> {
+    s.trim_start_matches('v')
+        .split('.')
+        .map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap_or(0))
+        .collect()
+}
+
+fn newer(a: &str, b: &str) -> bool {
+    let (mut x, mut y) = (parse_ver(a), parse_ver(b));
+    let n = x.len().max(y.len());
+    x.resize(n, 0);
+    y.resize(n, 0);
+    x > y
+}
+
+// None = Netzwerkfehler, Some(None) = kein Update, Some(Some(..)) = Update verfuegbar
+fn fetch_update() -> Option<Option<UpdateInfo>> {
+    let url = format!("https://api.github.com/repos/{}/releases/latest", REPO);
+    let resp = match ureq::get(&url)
+        .set("User-Agent", "QuickLaunch")
+        .set("Accept", "application/vnd.github+json")
+        .timeout(Duration::from_secs(6))
+        .call()
+    {
+        Ok(r) => r,
+        Err(ureq::Error::Status(404, _)) => return Some(None), // noch kein Release
+        Err(_) => return None,
+    };
+    let v: serde_json::Value = serde_json::from_reader(resp.into_reader().take(2_000_000)).ok()?;
+    let tag = v.get("tag_name")?.as_str()?;
+    let clean: String = tag
+        .trim_start_matches('v')
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-')
+        .collect();
+    if !newer(&clean, VERSION) {
+        return Some(None);
+    }
+    let assets = v.get("assets")?.as_array()?;
+    let find = |name: &str| -> Option<String> {
+        assets
+            .iter()
+            .find(|a| a.get("name").and_then(|n| n.as_str()) == Some(name))
+            .and_then(|a| a.get("browser_download_url"))
+            .and_then(|u| u.as_str())
+            .map(String::from)
+    };
+    match (find("quicklaunch.exe"), find("quicklaunch.exe.sha256")) {
+        (Some(u), Some(s)) => Some(Some(UpdateInfo { version: clean, url: u, sha_url: s })),
+        _ => Some(None),
+    }
+}
+
+#[tauri::command]
+fn version() -> String {
+    VERSION.to_string()
+}
+
+#[tauri::command(async)]
+fn check_update(app: AppHandle, force: bool) -> Option<UpdateInfo> {
+    let sh = app.state::<Arc<Shared>>();
+    if !force {
+        let last = *sh.last_check.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(t) = last {
+            if t.elapsed() < Duration::from_secs(86400) {
+                return sh.update.lock().unwrap_or_else(|e| e.into_inner()).clone();
+            }
+        }
+    }
+    let found = fetch_update()?;
+    *sh.last_check.lock().unwrap_or_else(|e| e.into_inner()) = Some(Instant::now());
+    *sh.update.lock().unwrap_or_else(|e| e.into_inner()) = found.clone();
+    found
+}
+
+fn download(url: &str, max: u64) -> Result<Vec<u8>, String> {
+    let r = ureq::get(url)
+        .set("User-Agent", "QuickLaunch")
+        .timeout(Duration::from_secs(120))
+        .call()
+        .map_err(|e| e.to_string())?;
+    let mut buf = Vec::new();
+    r.into_reader().take(max).read_to_end(&mut buf).map_err(|e| e.to_string())?;
+    Ok(buf)
+}
+
+#[tauri::command(async)]
+fn install_update(app: AppHandle) -> Result<(), String> {
+    let sh = app.state::<Arc<Shared>>();
+    let info = sh.update.lock().unwrap_or_else(|e| e.into_inner()).clone().ok_or("Kein Update bekannt")?;
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let bytes = download(&info.url, 150_000_000)?;
+    let sha_txt = String::from_utf8_lossy(&download(&info.sha_url, 4096)?).to_string();
+    let want: String = sha_txt.trim().chars().take(64).collect::<String>().to_lowercase();
+    let got: String = Sha256::digest(&bytes).iter().map(|b| format!("{:02x}", b)).collect();
+    if want != got {
+        return Err("Pruefsumme stimmt nicht".into());
+    }
+    if bytes.len() < 1_000_000 || &bytes[..2] != b"MZ" {
+        return Err("Keine gueltige Programmdatei".into());
+    }
+    let new = exe.with_file_name("quicklaunch.new");
+    let old = exe.with_file_name("quicklaunch.old.exe");
+    fs::write(&new, &bytes).map_err(|e| e.to_string())?;
+    let _ = fs::remove_file(&old);
+    // Eine laufende exe kann man umbenennen, aber nicht ueberschreiben
+    fs::rename(&exe, &old).map_err(|e| e.to_string())?;
+    if let Err(e) = fs::rename(&new, &exe) {
+        let _ = fs::rename(&old, &exe);
+        return Err(e.to_string());
+    }
+    // Die neue Version startet erst, wenn dieses Programm beendet ist (sonst greift die Einzelinstanz-Sperre)
+    let cmd = format!("/C \"ping -n 3 127.0.0.1 >nul & start \"\" \"{}\"\"", exe.display());
+    let _ = Command::new("cmd").raw_arg(cmd).creation_flags(NO_WINDOW).spawn();
+    app.exit(0);
+    Ok(())
+}
+
+// ---------- Original-Icons (wie im Windows-Startmenue) ----------
+
+fn b64(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut o = String::with_capacity(data.len() * 4 / 3 + 4);
+    for c in data.chunks(3) {
+        let n = ((c[0] as u32) << 16) | ((*c.get(1).unwrap_or(&0) as u32) << 8) | (*c.get(2).unwrap_or(&0) as u32);
+        o.push(T[((n >> 18) & 63) as usize] as char);
+        o.push(T[((n >> 12) & 63) as usize] as char);
+        o.push(if c.len() > 1 { T[((n >> 6) & 63) as usize] as char } else { '=' });
+        o.push(if c.len() > 2 { T[(n & 63) as usize] as char } else { '=' });
+    }
+    o
+}
+
+fn fnv(s: &str) -> u64 {
+    let mut h = 0xcbf29ce484222325u64;
+    for b in s.bytes() {
+        h ^= b as u64;
+        h = h.wrapping_mul(0x100000001b3);
+    }
+    h
+}
+
+// Holt das Icon direkt von der Windows-Shell: funktioniert fuer klassische Programme,
+// Store-Apps ("shell:AppsFolder\...") sowie fuer Dateien und Ordner.
+fn shell_icon_png(parsing_name: &str) -> Option<Vec<u8>> {
+    use windows::core::PCWSTR;
+    use windows::Win32::Foundation::{HWND, SIZE};
+    use windows::Win32::Graphics::Gdi::{
+        DeleteObject, GetDC, GetDIBits, GetObjectW, ReleaseDC, BITMAP, BITMAPINFO, BITMAPINFOHEADER, DIB_RGB_COLORS, HGDIOBJ,
+    };
+    use windows::Win32::System::Com::{CoInitializeEx, IBindCtx, COINIT_APARTMENTTHREADED};
+    use windows::Win32::UI::Shell::{IShellItemImageFactory, SHCreateItemFromParsingName, SIIGBF_BIGGERSIZEOK, SIIGBF_ICONONLY};
+    unsafe {
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+        let wide: Vec<u16> = parsing_name.encode_utf16().chain(std::iter::once(0)).collect();
+        let factory: IShellItemImageFactory = SHCreateItemFromParsingName(PCWSTR(wide.as_ptr()), None::<&IBindCtx>).ok()?;
+        let hbm = factory
+            .GetImage(SIZE { cx: 64, cy: 64 }, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK)
+            .ok()?;
+        let mut bm = BITMAP::default();
+        if GetObjectW(HGDIOBJ(hbm.0), size_of::<BITMAP>() as i32, Some(&mut bm as *mut BITMAP as *mut c_void)) == 0 {
+            let _ = DeleteObject(HGDIOBJ(hbm.0));
+            return None;
+        }
+        let (w, h) = (bm.bmWidth, bm.bmHeight);
+        let mut bi = BITMAPINFO::default();
+        bi.bmiHeader = BITMAPINFOHEADER {
+            biSize: size_of::<BITMAPINFOHEADER>() as u32,
+            biWidth: w,
+            biHeight: -h,
+            biPlanes: 1,
+            biBitCount: 32,
+            biCompression: 0,
+            ..Default::default()
+        };
+        let mut buf = vec![0u8; (w * h * 4) as usize];
+        let hdc = GetDC(HWND::default());
+        let lines = GetDIBits(hdc, hbm, 0, h as u32, Some(buf.as_mut_ptr() as *mut c_void), &mut bi, DIB_RGB_COLORS);
+        ReleaseDC(HWND::default(), hdc);
+        let _ = DeleteObject(HGDIOBJ(hbm.0));
+        if lines == 0 {
+            return None;
+        }
+        for p in buf.chunks_exact_mut(4) {
+            p.swap(0, 2); // BGRA -> RGBA
+        }
+        if buf.chunks_exact(4).all(|p| p[3] == 0) {
+            for p in buf.chunks_exact_mut(4) {
+                p[3] = 255; // Bild ohne Alpha-Kanal
+            }
+        }
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w as u32, h as u32);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().ok()?;
+            wr.write_image_data(&buf).ok()?;
+        }
+        Some(out)
+    }
+}
+
+#[tauri::command(async)]
+fn icon(app: AppHandle, key: String, persist: bool) -> Option<String> {
+    let sh = app.state::<Arc<Shared>>();
+    if let Some(v) = sh.icons.lock().unwrap_or_else(|e| e.into_inner()).get(&key) {
+        return Some(v.clone());
+    }
+    let dir = app.path().app_data_dir().ok()?.join("icons");
+    let file = dir.join(format!("{:016x}.png", fnv(&key)));
+    let cached = if persist { fs::read(&file).ok() } else { None };
+    let png = match cached {
+        Some(p) => p,
+        None => {
+            let p = shell_icon_png(&key)?;
+            if persist {
+                let _ = fs::create_dir_all(&dir);
+                let _ = fs::write(&file, &p);
+            }
+            p
+        }
+    };
+    let url = format!("data:image/png;base64,{}", b64(&png));
+    let mut m = sh.icons.lock().unwrap_or_else(|e| e.into_inner());
+    if m.len() > 400 {
+        m.clear();
+    }
+    m.insert(key, url.clone());
+    Some(url)
+}
+
 // ---------- Fenster: vorbereiten -> anzeigen -> ausblenden ----------
 
 fn position(w: &WebviewWindow) {
@@ -560,7 +809,7 @@ fn main() {
                 .build(),
         )
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
-        .invoke_handler(tauri::generate_handler![search, launch, open_url, suggest, ready, hide_window, quit])
+        .invoke_handler(tauri::generate_handler![search, icon, check_update, install_update, version, launch, open_url, suggest, ready, hide_window, quit])
         .on_window_event(|window, event| {
             if let WindowEvent::Focused(false) = event {
                 request_hide(window.app_handle());
@@ -568,10 +817,16 @@ fn main() {
         })
         .setup(|app| {
             let cache_dir = app.path().app_data_dir()?;
+            if let Ok(p) = std::env::current_exe() {
+                let _ = fs::remove_file(p.with_file_name("quicklaunch.old.exe")); // Rest eines frueheren Updates
+            }
             let mut idx = Index::default();
             load_cache(&cache_dir, &mut idx);
             let sh = Arc::new(Shared {
                 index: Mutex::new(idx),
+                icons: Mutex::new(HashMap::new()),
+                update: Mutex::new(None),
+                last_check: Mutex::new(None),
                 pending: AtomicBool::new(false),
                 closing: AtomicBool::new(false),
             });
