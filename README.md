@@ -8,59 +8,68 @@ Ein schneller Launcher für Windows, inspiriert von der Spotlight-Suche auf dem 
 - Dateien und Ordner auf dem PC finden und öffnen
 - Rechnen und im Web suchen
 - Eigene Befehle, zum Beispiel mehrere Apps mit einem Befehl starten
-- Startet auf Wunsch mit Windows
+- Startet automatisch mit Windows
+- Updates direkt über QuickLaunch installieren
 
 Mit einem Zeichen am Anfang suchst du gezielt: `>` Befehle, `@` Apps, `#` Dateien, `!` eigene Automationen.
 
 ## Installation
 
-QuickLaunch wird auf deinem eigenen PC gebaut. Das dauert beim ersten Mal ein paar Minuten, danach ist es sofort startklar. Du brauchst Windows 10 oder 11 und mehrere GB freien Speicherplatz für die Entwickler-Tools.
+QuickLaunch ist bereits fertig kompiliert. Du musst keine Entwickler-Tools installieren und nichts selbst bauen.
 
-### 1. Einmalig: Tools installieren
+1. Öffne die [Releases-Seite](https://github.com/xeminz/Quicklaunch/releases).
+2. Wähle die neueste Version aus.
+3. Lade **`quicklaunch.exe`** aus dem Bereich **Assets** herunter.
+4. Starte die heruntergeladene Datei.
 
-1. **Rust:** Lade `rustup-init.exe` von [rustup.rs](https://rustup.rs) herunter, starte sie und nimm die Standard-Einstellungen.
-2. **Visual Studio Build Tools:** Rust fragt bei der Installation danach. Wichtig ist der Haken bei **„Desktopentwicklung mit C++"**.
-3. **Neustart des Terminals:** Wenn du ein Terminal offen hattest, schließe es danach, damit es Rust kennt.
-4. **WebView2** ist unter Windows 10 und 11 schon vorhanden, du musst nichts tun.
+Das war's! QuickLaunch ist jetzt startbereit.
 
-### 2. Projekt herunterladen
+**Wichtig:** Lade bei der ersten Installation immer die neueste Version von GitHub herunter.
 
-- **Ohne Git:** Oben auf dieser Seite auf **Code**, dann **Download ZIP** klicken und den Ordner entpacken (zum Beispiel auf den Desktop).
-- **Mit Git:** `git clone https://github.com/xeminz/quicklaunch-rust.git`
+## Updates
 
-### 3. Bauen und starten
+QuickLaunch wird regelmäßig aktualisiert. Neue Versionen werden auf der [GitHub-Releases-Seite](https://github.com/xeminz/Quicklaunch/releases) veröffentlicht.
 
-1. Öffne den entpackten Ordner.
-2. **`BUILD.bat` doppelklicken** und warten, bis das Fenster fertig ist. Beim ersten Mal kann es einige Minuten dauern, weil alles neu gebaut wird.
-3. Das fertige Programm liegt danach hier:
-   `%LOCALAPPDATA%\QuickLaunch\quicklaunch.exe`
-4. Es startet automatisch und läuft ab jetzt mit Windows.
+Unten rechts in QuickLaunch siehst du deine aktuelle Versionsnummer. Sobald eine neue Version verfügbar ist, erscheint neben der Versionsnummer ein **blauer Punkt**.
 
-### 4. Benutzen
+Klicke auf die Versionsnummer, um das Update direkt in QuickLaunch zu installieren. Du musst die neue Version dafür nicht manuell von GitHub herunterladen.
+
+## Automatischer Start mit Windows
+
+QuickLaunch startet automatisch mit Windows, sodass du es nicht jedes Mal manuell öffnen musst.
+
+Nach dem Hochfahren und deiner Windows-Anmeldung läuft QuickLaunch im Hintergrund. Mit **Alt + Leertaste** kannst du den Launcher jederzeit öffnen.
+
+## Benutzung
 
 - **Alt + Leertaste** drücken und lostippen
 - Mit den Pfeiltasten auswählen und mit **Enter** öffnen
-- Beim ersten Start wird der Such-Index aufgebaut. Direkt danach kann es kurz dauern, bis alle Dateien gefunden werden.
+- Beim ersten Start wird der Suchindex aufgebaut. Es kann kurz dauern, bis alle Dateien gefunden werden.
 
 ## Hilfe bei Problemen
 
-**Windows blockiert das Programm (Smart App Control oder SmartScreen)**
-Selbst gebaute Programme sind nicht digital signiert, deshalb können Windows-Schutzfunktionen sie blockieren.
-- **SmartScreen** („Der Computer wurde durch Windows geschützt"): Auf **Weitere Informationen** und dann auf **Trotzdem ausführen** klicken.
-- **Smart App Control:** Das Programm wird ohne Hinweis geblockt oder startet nicht. Öffne **Windows-Sicherheit → App- & Browsersteuerung → Smart App Control-Einstellungen**. Wenn du es ausschaltest, ist der Schutz nicht mehr aktiv, und je nach Windows-Version lässt er sich nicht mehr einschalten. Prüfe das vorher.
-- Falls ein Antivirus-Programm meldet, dass die Datei verdächtig ist: Es ist ein neues, unsigniertes Programm. Du kannst den Ordner `%LOCALAPPDATA%\QuickLaunch` als Ausnahme hinzufügen.
+### Windows blockiert das Programm
 
-**BUILD.bat bricht ab**
-- Rust und die Visual Studio Build Tools müssen installiert sein, inklusive „Desktopentwicklung mit C++".
-- Fehler wie `link.exe not found` oder `cargo not found` bedeuten meistens: Tools fehlen, oder das Fenster muss einmal neu geöffnet werden.
-- Prüfen kannst du es mit `rustc --version`. Wenn dort eine Versionsnummer erscheint, ist Rust da.
+Da das Programm möglicherweise nicht digital signiert ist, kann Windows SmartScreen eine Warnung anzeigen.
 
-**Alt + Leertaste öffnet nichts**
-- Läuft `quicklaunch.exe` im Task-Manager? Wenn nicht, starte sie aus `%LOCALAPPDATA%\QuickLaunch`.
-- Eine andere App belegt vielleicht dieselbe Tastenkombination. Schließe sie zum Test.
-- Hilft nichts: `BUILD.bat` noch einmal ausführen.
+Prüfe zuerst, ob du die Datei aus dem offiziellen QuickLaunch-Repository heruntergeladen hast. Führe sie nur aus, wenn du der Quelle vertraust.
 
-**Dateien oder Apps werden nicht gefunden**
-Kurz warten, der Index aktualisiert sich im Hintergrund. Neu angelegte Dateien erscheinen nach einem Moment automatisch.
+### QuickLaunch startet nicht automatisch mit Windows
+
+- Prüfe im Task-Manager unter **Autostart-Apps**, ob QuickLaunch aktiviert ist.
+- Stelle sicher, dass die Anwendung korrekt installiert und der Autostart eingerichtet ist.
+- Starte QuickLaunch einmal manuell und prüfe die Einstellungen.
+
+### Alt + Leertaste öffnet nichts
+
+- Prüfe, ob `quicklaunch.exe` im Task-Manager läuft.
+- Eine andere Anwendung könnte dieselbe Tastenkombination verwenden.
+- Starte QuickLaunch erneut.
+
+### Dateien oder Apps werden nicht gefunden
+
+Warte kurz, bis der Suchindex aufgebaut oder aktualisiert wurde. Neu angelegte Dateien können einen Moment benötigen, bis sie erscheinen.
+
+---
 
 Gebaut von [xeminz](https://github.com/xeminz)
