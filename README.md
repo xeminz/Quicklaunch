@@ -4,72 +4,94 @@ Ein schneller Launcher für Windows, inspiriert von der Spotlight-Suche auf dem 
 
 ## Was kann es?
 
-- Apps starten
+- Apps starten (mit den Original-Icons aus dem Startmenü)
 - Dateien und Ordner auf dem PC finden und öffnen
 - Rechnen und im Web suchen
 - Eigene Befehle, zum Beispiel mehrere Apps mit einem Befehl starten
-- Startet automatisch mit Windows
-- Updates direkt über QuickLaunch installieren
+- Prüft selbst auf Updates und installiert sie mit einem Klick
+- Startet auf Wunsch mit Windows
 
-Mit einem Zeichen am Anfang suchst du gezielt: `>` Befehle, `@` Apps, `#` Dateien, `!` eigene Automationen.
+Mit einem Zeichen am Anfang suchst du gezielt: `>` Befehle, `@` Apps, `#` Dateien und Ordner, `!` eigene Automationen.
 
 ## Installation
 
-QuickLaunch ist bereits fertig kompiliert. Du musst keine Entwickler-Tools installieren und nichts selbst bauen.
+Du hast zwei Möglichkeiten. Du brauchst Windows 10 oder 11.
 
-1. Öffne die [Releases-Seite](https://github.com/xeminz/Quicklaunch/releases).
-2. Wähle die neueste Version aus.
-3. Lade **`quicklaunch.exe`** aus dem Bereich **Assets** herunter.
-4. Starte die heruntergeladene Datei.
+### Variante A: Fertige Version herunterladen
 
-Das war's! QuickLaunch ist jetzt startbereit.
+1. Öffne die Seite [Releases](https://github.com/xeminz/Quicklaunch/releases) und lade bei der neuesten Version die Datei `quicklaunch.exe` herunter.
+2. Lege sie in einen festen Ordner, zum Beispiel `%LOCALAPPDATA%\QuickLaunch`, und verschiebe sie danach nicht mehr.
+3. Doppelklicke die Datei. Beim ersten Start richtet sich der Autostart ein, und das Fenster öffnet sich einmal.
 
-**Wichtig:** Lade bei der ersten Installation immer die neueste Version von GitHub herunter.
+Windows kann das Programm blockieren, siehe "Hilfe bei Problemen".
 
-## Updates
+### Variante B: Selbst bauen
 
-QuickLaunch wird regelmäßig aktualisiert. Neue Versionen werden auf der [GitHub-Releases-Seite](https://github.com/xeminz/Quicklaunch/releases) veröffentlicht.
+QuickLaunch wird auf deinem eigenen PC gebaut. Das dauert beim ersten Mal ein paar Minuten. Du brauchst mehrere GB freien Speicherplatz für die Entwickler-Tools.
 
-Unten rechts in QuickLaunch siehst du deine aktuelle Versionsnummer. Sobald eine neue Version verfügbar ist, erscheint neben der Versionsnummer ein **blauer Punkt**.
+**1. Einmalig: Tools installieren**
 
-Klicke auf die Versionsnummer, um das Update direkt in QuickLaunch zu installieren. Du musst die neue Version dafür nicht manuell von GitHub herunterladen.
+1. **Rust:** Lade `rustup-init.exe` von [rustup.rs](https://rustup.rs) herunter, starte sie und nimm die Standard-Einstellungen.
+2. **Visual Studio Build Tools:** Rust fragt bei der Installation danach. Wichtig ist der Haken bei **"Desktopentwicklung mit C++"**.
+3. Schließe danach offene Terminals, damit sie Rust kennen.
+4. **WebView2** ist unter Windows 10 und 11 schon vorhanden.
 
-## Automatischer Start mit Windows
+**2. Projekt herunterladen**
 
-QuickLaunch startet automatisch mit Windows, sodass du es nicht jedes Mal manuell öffnen musst.
+- **Ohne Git:** Oben auf der GitHub-Seite auf **Code**, dann **Download ZIP** klicken und entpacken.
+- **Mit Git:** `git clone https://github.com/xeminz/Quicklaunch.git`
 
-Nach dem Hochfahren und deiner Windows-Anmeldung läuft QuickLaunch im Hintergrund. Mit **Alt + Leertaste** kannst du den Launcher jederzeit öffnen.
+**3. Bauen und starten**
 
-## Benutzung
+1. Öffne den Projektordner und doppelklicke **`BUILD.bat`**.
+2. Das fertige Programm liegt danach in `%LOCALAPPDATA%\QuickLaunch\quicklaunch.exe`. Es startet automatisch und läuft ab jetzt mit Windows.
+
+## Benutzen
 
 - **Alt + Leertaste** drücken und lostippen
 - Mit den Pfeiltasten auswählen und mit **Enter** öffnen
-- Beim ersten Start wird der Suchindex aufgebaut. Es kann kurz dauern, bis alle Dateien gefunden werden.
+- Mit `!neu` legst du eigene Automationen an, mit `exit` beendest du QuickLaunch
+- Beim ersten Start wird der Such-Index aufgebaut. Direkt danach kann es kurz dauern, bis alle Dateien gefunden werden.
+
+## Updates
+
+Unten rechts im Fenster steht die Versionsnummer. Gibt es eine neuere Version, erscheint dort **"● Update auf vX.Y.Z"**. Ein Klick lädt sie herunter, prüft die Prüfsumme, ersetzt das Programm und startet es neu. QuickLaunch fragt höchstens einmal am Tag bei GitHub nach. Mit dem Befehl `update` suchst du sofort.
 
 ## Hilfe bei Problemen
 
-### Windows blockiert das Programm
+**Windows blockiert das Programm (Smart App Control oder SmartScreen)**
+Selbst gebaute Programme sind nicht digital signiert, deshalb können Windows-Schutzfunktionen sie blockieren.
 
-Da das Programm möglicherweise nicht digital signiert ist, kann Windows SmartScreen eine Warnung anzeigen.
+- **SmartScreen** ("Der Computer wurde durch Windows geschützt"): Auf **Weitere Informationen** und dann auf **Trotzdem ausführen** klicken.
+- **Smart App Control:** Das Programm wird ohne Hinweis geblockt oder startet nicht. Öffne **Windows-Sicherheit → App- & Browsersteuerung → Smart App Control-Einstellungen**. Wenn du es ausschaltest, ist der Schutz nicht mehr aktiv, und je nach Windows-Version lässt er sich nicht mehr einschalten. Prüfe das vorher.
+- Falls ein Antivirus-Programm meldet, dass die Datei verdächtig ist: Es ist ein neues, unsigniertes Programm. Du kannst den Ordner `%LOCALAPPDATA%\QuickLaunch` als Ausnahme hinzufügen.
 
-Prüfe zuerst, ob du die Datei aus dem offiziellen QuickLaunch-Repository heruntergeladen hast. Führe sie nur aus, wenn du der Quelle vertraust.
+**BUILD.bat bricht ab**
 
-### QuickLaunch startet nicht automatisch mit Windows
+- Rust und die Visual Studio Build Tools müssen installiert sein, inklusive "Desktopentwicklung mit C++".
+- Fehler wie `link.exe not found` oder `cargo not found` bedeuten meistens: Tools fehlen, oder das Fenster muss einmal neu geöffnet werden.
+- Prüfen kannst du es mit `rustc --version`.
 
-- Prüfe im Task-Manager unter **Autostart-Apps**, ob QuickLaunch aktiviert ist.
-- Stelle sicher, dass die Anwendung korrekt installiert und der Autostart eingerichtet ist.
-- Starte QuickLaunch einmal manuell und prüfe die Einstellungen.
+**Alt + Leertaste öffnet nichts**
 
-### Alt + Leertaste öffnet nichts
+- Läuft `quicklaunch.exe` im Task-Manager? Wenn nicht, starte sie aus `%LOCALAPPDATA%\QuickLaunch`.
+- Eine andere App belegt vielleicht dieselbe Tastenkombination (zum Beispiel PowerToys Run). Probiere **Strg + Alt + Leertaste**, das ist die Ersatz-Taste.
 
-- Prüfe, ob `quicklaunch.exe` im Task-Manager läuft.
-- Eine andere Anwendung könnte dieselbe Tastenkombination verwenden.
-- Starte QuickLaunch erneut.
+**Dateien oder Apps werden nicht gefunden**
+Kurz warten, der Index aktualisiert sich im Hintergrund. Neu angelegte Dateien erscheinen nach einem Moment automatisch.
 
-### Dateien oder Apps werden nicht gefunden
+## Für Entwickler: neue Version veröffentlichen
 
-Warte kurz, bis der Suchindex aufgebaut oder aktualisiert wurde. Neu angelegte Dateien können einen Moment benötigen, bis sie erscheinen.
+Eine neue Version entsteht über einen Tag. GitHub Actions baut dann die `quicklaunch.exe` samt Prüfsumme und legt sie unter Releases ab:
 
----
+```
+git add .
+git commit -m "Beschreibung der Änderung"
+git push
+git tag v0.2.2
+git push origin v0.2.2
+```
+
+Die Versionsnummer im Tag muss höher sein als die vorherige. Alle laufenden QuickLaunch zeigen danach den Update-Knopf an.
 
 Gebaut von [xeminz](https://github.com/xeminz)

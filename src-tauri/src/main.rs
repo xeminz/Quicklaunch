@@ -419,7 +419,11 @@ fn launch(item: LaunchReq) {
 #[tauri::command(async)]
 fn open_url(url: String) {
     if url.starts_with("https://") || url.starts_with("http://") {
-        explorer(&url);
+        // direkt an die Windows-Shell: oeffnet den Standardbrowser (explorer.exe oeffnete bei Suchlinks einen Ordner)
+        let _ = Command::new("rundll32.exe")
+            .args(["url.dll,FileProtocolHandler", url.as_str()])
+            .creation_flags(NO_WINDOW)
+            .spawn();
     }
 }
 
